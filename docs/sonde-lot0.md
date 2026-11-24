@@ -65,3 +65,11 @@ Le clavier se présente alors sous `2DC8:5200` (« 8BitDo Retro Keyboard »), in
 Conclusion : la configuration du clavier passe par le câble, pas par le récepteur 2,4 G (`5201`), qui reste muet aux mêmes trames.
 
 Pendant cette passe la souris était en Bluetooth LE (`2DC8:5205`) : elle n'y expose que les collections standard (souris, clavier, contrôle système, consommateur), aucune interface fournisseur. Sa configuration demande donc l'adaptateur 2,4 G (`5206`) ; le câble reste à sonder.
+
+## Essai d'écriture clavier (cœur Python, câble, interrupteur OFF)
+
+Séquence unique : sauvegarde, `profile create cartouche-test`, `superb` (bouton B intégré) vers F13, relecture, `profile delete`, relecture. Tout a réussi, l'état final est identique à l'état initial (aucun profil, aucune touche, aucune macro).
+- Nom de profil : UTF-16 gros-boutiste, octet de longueur = taille du nom (`52 70 1c 00 …` accepté ; relu `54 80 1c 00 00 63 00 61 …`). La longueur est donc bien un octet de longueur, pas une constante.
+- F13 : `07 00 68` accepté et relu à l'identique (`54 83 6c 07 00 68`). Non vérifié : ce que la touche émet réellement.
+- Lecture des macros : liste vide (`54 82`). Format des enregistrements non confirmé, écriture de macro non essayée.
+- Souris : adaptateur 5206 absent pendant l'essai (seule la souris en Bluetooth 5205 était présente), rien d'essayé.
