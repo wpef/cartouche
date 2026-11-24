@@ -1,0 +1,8 @@
+[package]
+name = "cartouche-remap"
+description = "Remappage côté logiciel (couches, profils par application) : à remplir"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]

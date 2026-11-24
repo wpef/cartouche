@@ -9,3 +9,11 @@ Si le vault n'est pas accessible dans cette session, dis-le en une ligne et dema
 - Toute écriture de configuration est précédée d'une lecture sauvegardée dans `captures/` (hors git).
 - `captures/` : sorties brutes et captures USB, hors git (numéros de série, adresses Bluetooth).
 - Commits libres, un par intention, avec la ligne `Co-Authored-By` de Claude.
+
+## Build et tests (Rust)
+- Chaîne retenue : `stable-x86_64-pc-windows-gnu` (rustup, profil utilisateur). Aucun outil MSVC sur ce PC (`vswhere` et `link.exe` absents), et son installation demanderait les droits administrateur.
+- Espace de travail Cargo à la racine : `crates/cartouche-core` (protocole), `crates/cartouche-cli` (binaire `cartouche`), `crates/cartouche-remap` (vide, remappage logiciel).
+- `hidapi` est épinglé à `=2.6.4` avec `windows-native` : les versions 2.6.5 et suivantes passent par `windows-sys 0.61` en `raw-dylib`, qui exige `dlltool` et `as` (binutils, absents avec la chaîne GNU).
+- PATH : `~/.cargo/bin`. Commandes : `cargo test`, `cargo build -p cartouche-cli`, `cargo run -p cartouche-cli -- list`.
+- Le transport refuse tout rapport `0xB2` (firmware) ; les tests le vérifient.
+- Blocage connu : le contrôle d'application de Windows peut bloquer le script de build d'une dépendance (`quote`, erreur 4551). Ne pas le contourner : le débloquer côté Windows.
