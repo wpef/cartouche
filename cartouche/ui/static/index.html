@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="jeton" content="__JETON__">
+<title>Cartouche</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<a class="saut" href="#main">Aller au contenu</a>
+<header>
+  <h1><span class="logo" aria-hidden="true"></span>Cartouche</h1>
+  <span id="badge-demo" class="badge" hidden>démonstration</span>
+  <div class="reglages">
+    <label>Disposition <select id="sel-layout"><option value="azerty">AZERTY</option><option value="qwerty">QWERTY</option></select></label>
+    <button id="btn-theme" type="button" aria-label="Changer de thème">Thème</button>
+  </div>
+</header>
+<nav id="nav" aria-label="Sections"></nav>
+<div id="msg" role="status" aria-live="polite"></div>
+<main id="main" tabindex="-1"></main>
+<div id="barre" role="region" aria-label="Brouillon" hidden></div>
+<dialog id="dlg"></dialog>
+<script src="/static/app.js"></script>
+<script src="/static/clavier.js"></script>
+<script src="/static/souris.js"></script>
+<script src="/static/divers.js"></script>
+</body>
+</html>
