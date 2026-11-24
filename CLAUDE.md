@@ -10,10 +10,9 @@ Si le vault n'est pas accessible dans cette session, dis-le en une ligne et dema
 - `captures/` : sorties brutes et captures USB, hors git (numéros de série, adresses Bluetooth).
 - Commits libres, un par intention, avec la ligne `Co-Authored-By` de Claude.
 
-## Build et tests (Rust)
-- Chaîne retenue : `stable-x86_64-pc-windows-gnu` (rustup, profil utilisateur). Aucun outil MSVC sur ce PC (`vswhere` et `link.exe` absents), et son installation demanderait les droits administrateur.
-- Espace de travail Cargo à la racine : `crates/cartouche-core` (protocole), `crates/cartouche-cli` (binaire `cartouche`), `crates/cartouche-remap` (vide, remappage logiciel).
-- `hidapi` est épinglé à `=2.6.4` avec `windows-native` : les versions 2.6.5 et suivantes passent par `windows-sys 0.61` en `raw-dylib`, qui exige `dlltool` et `as` (binutils, absents avec la chaîne GNU).
-- PATH : `~/.cargo/bin`. Commandes : `cargo test`, `cargo build -p cartouche-cli`, `cargo run -p cartouche-cli -- list`.
-- Le transport refuse tout rapport `0xB2` (firmware) ; les tests le vérifient.
-- Blocage connu : le contrôle d'application de Windows peut bloquer le script de build d'une dépendance (`quote`, erreur 4551). Ne pas le contourner : le débloquer côté Windows.
+## Pile et commandes (Python)
+- Python 3.13 dans `.venv` ; seule dépendance : `hidapi`. Pas de Rust : Smart App Control est actif sur ce PC et bloque tout exécutable compilé ici (erreur 4551 sur le script de build de `quote`) ; on ne le désactive pas.
+- Installation : `.venv\Scripts\pip install -e .` (Windows) ; lancement : `.venv\Scripts\python -m cartouche list|dump|map|unmap|profile|macro|mouse|apply|restore` ; `--dry-run` n'envoie rien.
+- Tests : `.venv\Scripts\python -m unittest` (sans matériel, sur trames réelles).
+- Le transport refuse tout rapport `0xB2` (firmware). Sauvegarde automatique dans `captures/sauvegardes/` avant toute écriture, relecture de contrôle après.
+- API du cœur : `docs/api-coeur.md`. `cartouche/ui/` et `cartouche/moteur/` : réservés à d'autres chantiers.
