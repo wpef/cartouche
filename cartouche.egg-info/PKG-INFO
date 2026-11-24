@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: cartouche
+Version: 0.1.0
+Summary: Configurateur non officiel du clavier 8BitDo Retro Mechanical et de la souris Retro R8
+License-Expression: GPL-3.0-or-later
+Requires-Python: >=3.13
+License-File: LICENSE
+License-File: NOTICE.md
+Requires-Dist: hidapi
+Dynamic: license-file
