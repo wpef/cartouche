@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "seuil_long": 400,
+  "delai_double": 300,
+  "pause_apps": ["valorant.exe", "eldenring.exe"],
+  "profil_defaut": "defaut",
+  "commun": {
+    "touches": {
+      "mouse4": {"couche": "souris", "court": "alt+left"},
+      "ctrl+alt+p": {"profil": "suivant"}
+    },
+    "couches": {
+      "souris": {
+        "wheelup": {"media": "volup"},
+        "wheeldown": {"media": "voldown"},
+        "ctrl+wheelup": {"molette": [-120, 0]},
+        "ctrl+wheeldown": {"molette": [120, 0]}
+      }
+    }
+  },
+  "profils": {
+    "defaut": {
+      "touches": {
+        "capslock": {"couche": "nav", "court": "esc"},
+        "f13": "ctrl+shift+x",
+        "f14": {
+          "court": {"texte": "Bonjour,\n"},
+          "long": {"lancer": ["notepad.exe"]},
+          "double": {"url": "https://example.org"}
+        },
+        "f15": {"macro": ["ctrl+c", {"attendre": 100}, "alt+tab", {"attendre": 150}, "ctrl+v"]},
+        "f16": {"media": "playpause"}
+      },
+      "couches": {
+        "nav": {"h": "left", "j": "down", "k": "up", "l": "right"}
+      }
+    },
+    "code": {
+      "apps": ["code.exe", "devenv.exe"],
+      "touches": {
+        "f13": "ctrl+shift+p"
+      }
+    }
+  }
+}
