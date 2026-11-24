@@ -142,25 +142,57 @@ class Crochets:
 _cache = {"hwnd": None, "t": 0.0, "nom": ""}
 
 
+def _nom_processus(hwnd):
+    pid = w.DWORD()
+    u32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+    h = k32.OpenProcess(0x1000, False, pid.value)  # QUERY_LIMITED_INFORMATION
+    if not h:
+        return ""
+    try:
+        buf, n = ctypes.create_unicode_buffer(520), w.DWORD(520)
+        return os.path.basename(buf.value).lower() if k32.QueryFullProcessImageNameW(h, 0, buf, ctypes.byref(n)) else ""
+    finally:
+        k32.CloseHandle(h)
+
+
 def application_premier_plan():
     """Nom du processus de la fenêtre au premier plan, en minuscules ('' si illisible). Mis en cache 2 s par fenêtre."""
     try:
         hwnd, now = u32.GetForegroundWindow(), time.monotonic()
         if hwnd == _cache["hwnd"] and now - _cache["t"] < 2:
             return _cache["nom"]
-        pid, nom = w.DWORD(), ""
-        u32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
-        h = k32.OpenProcess(0x1000, False, pid.value)  # QUERY_LIMITED_INFORMATION
-        if h:
-            buf, n = ctypes.create_unicode_buffer(520), w.DWORD(520)
-            if k32.QueryFullProcessImageNameW(h, 0, buf, ctypes.byref(n)):
-                nom = os.path.basename(buf.value).lower()
-            k32.CloseHandle(h)
+        nom = _nom_processus(hwnd)
         _cache.update(hwnd=hwnd, t=now, nom=nom)
         return nom
     except Exception:
         log.exception("application au premier plan")
         return ""
+
+
+ENUMPROC = ctypes.WINFUNCTYPE(w.BOOL, w.HWND, w.LPARAM)
+u32.EnumWindows.argtypes = [ENUMPROC, w.LPARAM]
+u32.IsWindowVisible.argtypes = [w.HWND]
+u32.GetWindowTextLengthW.argtypes = [w.HWND]
+dwm = ctypes.WinDLL("dwmapi")
+dwm.DwmGetWindowAttribute.argtypes = [w.HWND, w.DWORD, ctypes.c_void_p, w.DWORD]
+
+
+def applications_ouvertes():
+    """Noms (minuscules) des processus qui ont une fenêtre visible : pour choisir une application dans l'interface."""
+    noms = set()
+
+    def voir(hwnd, _):
+        try:
+            cache = w.DWORD()  # DWMWA_CLOAKED : fenêtres d'applications suspendues
+            dwm.DwmGetWindowAttribute(hwnd, 14, ctypes.byref(cache), 4)
+            if u32.IsWindowVisible(hwnd) and u32.GetWindowTextLengthW(hwnd) and not cache.value:
+                noms.add(_nom_processus(hwnd))
+        except Exception:
+            log.exception("énumération des fenêtres")
+        return True
+
+    u32.EnumWindows(ENUMPROC(voir), 0)
+    return sorted(n for n in noms if n)
 
 
 def _envoyer(*entrees):

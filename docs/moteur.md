@@ -40,4 +40,5 @@ Un bouton de souris peut servir de couche : `"mouse4": {"couche": "souris", "cou
 - Une touche à règle `court/long/double` est avalée à l'appui et décidée au relâchement.
 - Les modificateurs physiquement tenus s'ajoutent à un accord émis.
 - Le moteur ne voit pas les fenêtres d'administrateur (Windows ne livre pas leurs touches à un processus normal) ; le nom d'application y est vide.
-- `cartouche.moteur.demarrage_auto(True, config)` écrit un `.cmd` dans le dossier Démarrage ; rien ne l'appelle.
+- `Service.pause(True|False)` : le moteur laisse tout passer sans retirer les crochets (menu de l'icône, écran Logiciel).
+- `cartouche.moteur.demarrage_auto(True, config, args=None)` écrit un `.cmd` dans le dossier Démarrage ; seul l'interrupteur de l'écran Logiciel l'appelle, sur clic (`args` remplace la commande, pour lancer l'application complète). `demarrage_auto_actif()` lit l'état.

@@ -57,6 +57,13 @@ class Service:
         s = Sortie(threading.Event())
         s.executer(self.moteur.liberer())
 
+    def pause(self, pause=True):
+        """Le moteur laisse tout passer (comme Ctrl+Alt+Pause) sans retirer les crochets."""
+        with self.moteur.verrou:
+            self.moteur.actif = not pause
+            steps = self.moteur.liberer()
+        self.file.put(steps)
+
     def recharger(self, config):
         """Nouvelle configuration à chaud ; si elle est invalide, lève ErreurConfig et garde l'ancienne."""
         self.moteur.charger(charger_config(config))
@@ -102,18 +109,29 @@ class Service:
         s.liberer()
 
 
-def demarrage_auto(activer, config=None):
+def _lanceur():
+    return os.path.join(os.environ["APPDATA"], "Microsoft", "Windows", "Start Menu", "Programs", "Startup", "cartouche-moteur.cmd")
+
+
+def demarrage_auto_actif():
+    return os.path.exists(_lanceur())
+
+
+def demarrage_auto(activer, config=None, args=None):
     """Pose ou retire un lanceur dans le dossier Démarrage de l'utilisateur (jamais appelé par le moteur lui-même).
+    `args` remplace `-m cartouche.moteur --config …` (ex. ["-m", "cartouche", "app", "--sans-navigateur"]).
     ponytail: un .cmd plutôt qu'un .lnk (qui demande COM) ; même effet à l'ouverture de session."""
-    dossier = os.path.join(os.environ["APPDATA"], "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
-    lanceur = os.path.join(dossier, "cartouche-moteur.cmd")
+    lanceur = _lanceur()
     if not activer:
         if os.path.exists(lanceur):
             os.remove(lanceur)
         return lanceur
     py = os.path.join(os.path.dirname(sys.executable), "pythonw.exe")
     py = py if os.path.exists(py) else sys.executable
-    cmd = f'"{py}" -m cartouche.moteur' + (f' --config "{os.path.abspath(config)}"' if config else "")
+    if args is None:
+        args = ["-m", "cartouche.moteur"] + (["--config", os.path.abspath(config)] if config else [])
+    cmd = " ".join(f'"{a}"' if " " in a else a for a in [f'"{py}"', *args])
+    os.makedirs(os.path.dirname(lanceur), exist_ok=True)
     with open(lanceur, "w", encoding="utf-8") as f:
         f.write(f'@echo off\r\nstart "" /min {cmd}\r\n')
     return lanceur
