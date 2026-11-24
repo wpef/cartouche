@@ -1,5 +1,5 @@
 "use strict";
-/* Appareils, cartouche (sauvegardes, import/export, usine), testeur de touches, emplacement « Logiciel ». */
+/* Appareils, cartouche (sauvegardes, import/export, usine), testeur de touches. */
 (() => {
   const { h } = C;
 
@@ -11,7 +11,7 @@
           h("p", {}, p.message), C.erreurs[z] ? h("div", { class: "alerte" }, C.erreurs[z]) : null,
           d ? ok(d) : null);
       };
-      m.append(C.etat.demo ? h("div", { class: "ok" }, "Mode démonstration : clavier et souris simulés en mémoire, rien n'est écrit dans le matériel.") : null,
+      m.append(h("div", { class: "ok", hidden: !C.etat.demo }, "Mode démonstration : clavier et souris simulés en mémoire, rien n'est écrit dans le matériel."),
         h("div", { class: "cartes" },
           carte("clavier", "Clavier 8BitDo Retro Mechanical", d => h("p", {}, `Profil : ${d.profil ?? "aucun"} · ${Object.keys(d.touches).length} touche(s) modifiée(s) · ${d.macros.length} macro(s)`)),
           carte("souris", "Souris Retro R8", d => h("p", {}, `${d.dpi.current} DPI · batterie ${d.batterie.known ? d.batterie.percent + " %" : "inconnue"}`))),
@@ -28,10 +28,11 @@
   C.sections.push({
     id: "cartouche", titre: "Cartouche", rendre: m => {
       const liste = h("div", {}, h("p", { class: "doux" }, "Chargement…"));
-      const exporter = () => {
+      const exporter = async () => {
         const c = { cartouche: 1 };
         if (C.draft.clavier) c.clavier = C.draft.clavier;
         if (C.draft.souris) c.souris = C.draft.souris;
+        try { c.logiciel = await C.logiExporter(); } catch (e) { return C.msg("Export du logiciel impossible : " + e.message); }
         const a = h("a", { href: URL.createObjectURL(new Blob([JSON.stringify(c, null, 2)], { type: "application/json" })), download: "cartouche.json" });
         a.click(); URL.revokeObjectURL(a.href);
       };
@@ -40,12 +41,13 @@
         try {
           const r = await C.api("POST", "/api/importer", { cartouche: JSON.parse(await f.text()) });
           for (const z of ["clavier", "souris"]) if (r[z] && C.draft[z]) C.draft[z] = z === "souris" ? { ...C.draft[z], boutons: { ...C.draft[z].boutons, ...r[z].boutons } } : { ...r[z] };
-          C.msg("Cartouche chargée dans le brouillon : rien n'est écrit tant que tu n'as pas validé.", true);
+          if (r.logiciel) await C.logiImporter(r.logiciel);
+          C.msg("Cartouche chargée dans le brouillon" + (r.logiciel ? " (réglages du logiciel dans l'écran Logiciel)" : "") + " : rien n'est écrit ni enregistré tant que tu n'as pas validé.", true);
           C.rafraichir();
         } catch (e) { C.msg("Import refusé : " + e.message); }
       };
       m.append(h("h3", {}, "Export et import"),
-        h("div", { class: "ligne" }, h("button", { onclick: exporter }, "Exporter le brouillon en JSON"),
+        h("div", { class: "ligne" }, h("button", { onclick: exporter }, "Exporter la cartouche entière en JSON"),
           h("label", {}, "Importer ", h("input", { type: "file", accept: ".json,application/json", onchange: e => importer(e.target.files[0]) }))),
         h("h3", {}, "Sauvegardes automatiques"), liste,
         h("h3", {}, "État d'usine"),
@@ -98,12 +100,6 @@
         zone, dessin, h("h3", {}, "Dernières touches"), liste);
       maj(null); montre();
     },
-  });
-
-  /* ---- emplacement pour la suite : le moteur logiciel (cartouche/moteur) viendra ici --------------------- */
-  C.sections.push({
-    id: "logiciel", titre: "Logiciel", vide: true, rendre: m =>
-      m.append(h("p", { class: "doux" }, "Réservé aux fonctions côté ordinateur (profils par application, couches). Rien ici pour l'instant.")),
   });
 
   C.demarrer();

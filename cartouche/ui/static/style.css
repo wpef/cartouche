@@ -92,3 +92,10 @@ svg.souris text { font-size: 11px; fill: var(--texte); pointer-events: none; tex
 @media (max-width: 700px) { main { margin: 0 8px 90px; padding: 10px; } nav { padding: 8px 8px 0; } .pas { grid-template-columns: 1fr 1fr; } }
 @media (prefers-reduced-motion: no-preference) { button { transition: background .12s; } }
 #barre[hidden], [hidden] { display: none !important; }
+/* logiciel */
+.puce button.x { border: 0; background: transparent; padding: 0 4px; color: inherit !important; font-size: .85em; }
+.puce.cour button.x { color: var(--violet-texte) !important; }
+.barre-logi { padding: 8px 0; border-top: 1px solid var(--bord); }
+.barre-logi .alerte { padding: 4px 10px; }
+textarea { max-width: 100%; }
+select { max-width: 100%; }

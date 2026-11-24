@@ -172,7 +172,25 @@ C.cibleLibelle = t => {
   return t.split("+").map(C.libelle).join(" + ");
 };
 
+/* Veille légère : toutes les 5 s on regarde quels périphériques sont visibles (énumération HID seulement, aucune ouverture). */
+const NOMS_Z = { clavier: "Clavier", souris: "Souris" };
+C.veille = async () => {
+  if (document.hidden || !C.etat) return;
+  let e;
+  try { e = await C.api("GET", "/api/etat"); } catch { return; }
+  for (const z of ["clavier", "souris"]) {
+    const avant = C.etat.peripheriques[z], apres = e.peripheriques[z];
+    if (avant.statut === apres.statut) continue;
+    C.etat.peripheriques[z] = apres;
+    C.msg(`${NOMS_Z[z]} : ${apres.message}`, apres.pret);
+    if (C.modifs().length) continue; // un brouillon en cours n'est jamais écrasé : « Actualiser » relira
+    await C.charger();
+    C.msg(`${NOMS_Z[z]} : ${apres.message}`, apres.pret);
+  }
+};
+
 C.demarrer = async () => {
+  setInterval(C.veille, 5000);
   C.layout = stock.get("layout") === "qwerty" ? "qwerty" : "azerty";
   const sel = $("#sel-layout");
   sel.value = C.layout;

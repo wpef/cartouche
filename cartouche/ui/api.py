@@ -7,9 +7,11 @@ import tempfile
 import threading
 from pathlib import Path
 
-from .. import clavier as K, profil, souris as S, transport
+from .. import clavier as K, donnees, profil, souris as S, transport
 from .. import touches as T
 from ..transport import Erreur
+from ..moteur.logique import compiler
+from ..moteur.service import charger_config
 from . import maquette
 
 MACROS_VERIFIEES = False  # le cœur le dit : `Clavier.ecrire_macro` = « format non vérifié sur matériel »
@@ -31,6 +33,11 @@ class Bloque(Exception):
 ROUTES = {}
 
 
+def _service(cfg):
+    from ..moteur import Service
+    return Service(cfg)
+
+
 def route(methode, chemin):
     def poser(f):
         ROUTES[(methode, chemin)] = f
@@ -39,10 +46,41 @@ def route(methode, chemin):
 
 
 class App:
-    def __init__(self, demo=False, dossier=None):
+    def __init__(self, demo=False, dossier=None, donnees_dir=None, moteur=None):
+        """`donnees_dir` : dossier du fichier de l'utilisateur (défaut `%APPDATA%/Cartouche`, un dossier temporaire en démo)."""
         self.demo, self.lock = demo, threading.RLock()  # un seul accès HID à la fois
         self.dossier = Path(dossier or (tempfile.mkdtemp(prefix="cartouche-demo-") if demo else profil.DOSSIER_SAUVEGARDES))
+        self.donnees = Path(donnees_dir or (tempfile.mkdtemp(prefix="cartouche-donnees-") if demo else donnees.dossier()))
         self.maquettes = {"clavier": maquette.Clavier(), "souris": maquette.Souris()}
+        self.auto = False  # démarrage automatique simulé (démo)
+        self.erreur_config = None
+        try:
+            cfg = donnees.lire(self.donnees).get("logiciel", {})
+        except Erreur as e:
+            cfg, self.erreur_config = {}, str(e)
+        if moteur is None:
+            try:
+                moteur = (maquette.Moteur if demo else _service)(cfg)
+            except ValueError as e:  # configuration enregistrée invalide : on démarre à vide
+                moteur, self.erreur_config = (maquette.Moteur if demo else _service)({}), f"configuration du logiciel refusée : {e}"
+        self.moteur = moteur
+
+    def memoriser(self, **etats):
+        """Garde dans le fichier de l'utilisateur l'état relu du matériel (sans la batterie, qui change)."""
+        try:
+            donnees.mettre(self.donnees, **{z: {k: v for k, v in e.items() if k != "batterie"} for z, e in etats.items()})
+        except (OSError, Erreur):  # le matériel est déjà écrit et relu : un fichier illisible ne doit pas tout faire échouer
+            pass
+
+    def batterie(self):
+        """Batterie de la souris, ou None si elle n'est pas joignable. Un seul accès HID à la fois."""
+        with self.lock:
+            if self.demo:
+                return self.maquettes["souris"].etat()["batterie"]
+            if not any(d["pid"] == transport.PID_SOURIS and d["page"] == transport.PAGE_SOURIS for d in transport.lister()):
+                return None
+            with self.ouvrir("souris") as s:
+                return s.batterie()
 
     @contextlib.contextmanager
     def ouvrir(self, quoi):
@@ -86,7 +124,8 @@ def r_etat(app, q, b):
                {"pid": transport.PID_SOURIS, "page": transport.PAGE_SOURIS}]
     else:
         try:
-            ifs = transport.lister()
+            with app.lock:
+                ifs = transport.lister()
         except Exception as e:  # hidapi absent ou en échec
             raise Erreur(f"énumération HID impossible : {e}")
     return {"demo": app.demo, "peripheriques": statut(ifs), "macros_ecriture": MACROS_VERIFIEES,
@@ -167,6 +206,17 @@ def valider(b):
         raise Invalide(f"brouillon invalide : {e}")
 
 
+def valider_logiciel(cfg):
+    """Section « logiciel » -> elle-même si le moteur l'accepte, sinon Invalide (même contrôle que `Service.recharger`)."""
+    if not isinstance(cfg, dict):
+        raise Invalide("la configuration du logiciel doit être un objet JSON")
+    try:
+        compiler(charger_config(cfg))
+    except (ValueError, TypeError, KeyError, AttributeError, IndexError) as e:
+        raise Invalide(f"configuration du logiciel refusée : {e}")
+    return cfg.get("logiciel", cfg)  # une cartouche entière collée à la place de la section est acceptée
+
+
 def _fr(h):
     return NOMS_FR.get(h, h)
 
@@ -235,6 +285,7 @@ def _appliquer(app, voulu):
         if s:
             notes += profil.appliquer_souris(s, {"dpi": cur["souris"]["dpi"], "boutons": voulu["souris"]["boutons"]})
         etat = {z: o.etat() for z, o in (("clavier", k), ("souris", s)) if o}
+        app.memoriser(**etat)
         return {"ecrit": True, "notes": notes, "sauvegarde": chemin.name, "etat": etat, **d}
 
 
@@ -261,9 +312,12 @@ def r_importer(app, q, b):
     if not isinstance(c, dict) or c.get("cartouche") != 1:
         raise Invalide("ce n'est pas une cartouche (version 1 attendue)")
     try:
-        return valider(_brouillon(c))
+        out = valider(_brouillon(c))
     except AttributeError:
         raise Invalide("cartouche mal formée")
+    if "logiciel" in c:
+        out["logiciel"] = valider_logiciel(c["logiciel"])
+    return out
 
 
 @route("GET", "/api/sauvegardes")
@@ -301,4 +355,5 @@ def r_usine(app, q, b):
     with app.lock, app.ouvrir("clavier") as k:
         chemin = profil.sauvegarder(profil.lire_tout(k), app.dossier)
         k.supprimer_profil()
+        app.memoriser(clavier=k.etat())
         return {"sauvegarde": chemin.name, "etat": k.etat()}

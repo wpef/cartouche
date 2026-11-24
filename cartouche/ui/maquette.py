@@ -3,6 +3,7 @@ Rien ne touche au matériel. (Un `Faux` rejoue des réponses figées : il ne se 
 from .. import touches as T
 from ..transport import NonPris
 from ..clavier import corps_macro
+from ..moteur.logique import Moteur as LogiqueMoteur
 
 
 class Clavier:
@@ -36,6 +37,28 @@ class Clavier:
     def ecrire_macro(self, m):
         corps_macro(m)
         self.liste = [x for x in self.liste if x["key"] != m["key"]] + [dict(m)]
+
+
+class Moteur:
+    """Moteur simulé : mêmes méthodes que `moteur.Service`, aucun crochet posé."""
+
+    def __init__(self, config):
+        self.moteur, self.tourne = LogiqueMoteur(config), False
+
+    def demarrer(self):
+        self.tourne = True
+
+    def arreter(self):
+        self.tourne = False
+
+    def pause(self, pause=True):
+        self.moteur.actif = not pause
+
+    def recharger(self, config):
+        self.moteur.charger(config)
+
+    def etat(self):
+        return dict(self.moteur.etat(), tourne=self.tourne, crochets=self.tourne, evenements=0, erreur=None)
 
 
 class Souris:

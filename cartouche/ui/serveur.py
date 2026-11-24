@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 from ..transport import Erreur, NonPris
-from . import api
+from . import api, logiciel  # noqa: F401  (enregistre les routes de l'écran Logiciel)
 
 STATIC = Path(__file__).parent / "static"
 TYPES = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
@@ -18,6 +18,7 @@ CSP = "default-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'no
 
 class Serveur(ThreadingHTTPServer):
     daemon_threads = True
+    allow_reuse_address = False  # sous Windows, SO_REUSEADDR laisserait deux instances (ou un intrus) se lier au même port
 
     def __init__(self, app, port=0):
         super().__init__(("127.0.0.1", port), Handler)

@@ -11,8 +11,17 @@ Le brouillon vit dans la page. `POST /api/diff` relit le matériel et liste les 
 ## Routes
 `GET /api/etat | clavier | souris | catalogue | cible?texte= | sauvegardes` ; `POST /api/diff | appliquer | importer | restaurer | usine`. Voir `api.py`.
 
-## Ajouter une section (ex. « Logiciel »)
-Côté API : une fonction `@route("GET", "/api/<nom>")` dans `api.py` (ou un nouveau module qui l'importe). Côté page : `C.sections.push({id, titre, rendre(main)})` dans un script chargé par `index.html` avant `divers.js` ; la section « Logiciel » existe déjà, vide, dans `divers.js`.
+## Écran « Logiciel » (`logiciel.py`, `static/logiciel.js`)
+`GET /api/logiciel | /api/logiciel/etat | /api/applications` ; `POST /api/logiciel/valider | enregistrer | moteur {action: demarrer|pause|reprendre|arreter} | auto {activer}`. Une configuration est compilée par le moteur (`moteur.logique.compiler`) avant d'être enregistrée dans `cartouche.json` et rechargée à chaud ; invalide, elle ne change rien. `auto` est le seul appel à `demarrage_auto` (sur clic ; simulé en démo). La page garde la configuration en brouillon (formulaires et éditeur JSON) jusqu'à « Enregistrer et recharger ». Applications ouvertes : `moteur.windows.applications_ouvertes`.
+
+## Fichier de l'utilisateur
+`App(demo, dossier, donnees_dir, moteur)` : `donnees_dir` (défaut `%APPDATA%/Cartouche`) contient `cartouche.json`. Après chaque écriture matériel réussie, l'état relu y est mémorisé (`App.memoriser`). Import / export de l'écran Cartouche : clavier, souris et logiciel. Lancement groupé (interface + moteur + icône) : `python -m cartouche app`, voir `README.md`.
+
+## Veille des périphériques
+La page interroge `/api/etat` toutes les 5 s (énumération HID, aucune ouverture) et affiche un message quand un périphérique apparaît ou disparaît ; elle relit le matériel sauf si un brouillon est en cours.
+
+## Ajouter une section
+Côté API : une fonction `@route("GET", "/api/<nom>")` dans un module importé par `serveur.py`. Côté page : `C.sections.push({id, titre, rendre(main)})` dans un script chargé par `index.html` avant `divers.js`.
 
 ## À savoir
-`static/` doit être livré avec le paquet : `pyproject.toml` n'a pas de `package-data` (l'installation éditable suffit pour l'instant).
+`static/` et `exemple.json` sont livrés avec le paquet (`package-data` de `pyproject.toml`).
