@@ -56,8 +56,13 @@ def nom_usage(u):
     return f"0x{u:02x}"
 
 
+# Les deux sources (8bitdo-kbd-mapper, 8db-retro-config) donnent « menu » et « compose » comme alias du bouton A (0x6D) :
+# le clavier n'a pas de touche Menu, c'est ce que le bouton A envoie d'origine. 0x65 est Maj gauche, pas Menu.
+HW_ALIAS = {"menu": "supera", "compose": "supera", "app": "supera"}
+
+
 def hw_code(nom):
-    nom = nom.lower()
+    nom = HW_ALIAS.get(nom.lower(), nom.lower())
     if nom.startswith("0x"):
         return int(nom, 16)
     if nom in HW_SEUL:

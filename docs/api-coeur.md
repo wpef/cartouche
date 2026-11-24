@@ -18,7 +18,7 @@ Noms de touches, cibles et pas de macro : textes (`touches.py`). Tout ce qui éc
 - `NonPris` : `ecrire_dpi`, `frequence_scrutation`, `distance_decollage`, `molette`.
 
 ## touches
-- `hw_code(nom) -> int`, `hw_nom(code) -> str` (`superb`, `supera`, `k1..k8`, `capslock`, `0x6c`).
+- `hw_code(nom) -> int`, `hw_nom(code) -> str` (`superb`, `supera`, `k1..k8`, `capslock`, `0x6c`). `menu`, `compose`, `app` = `supera` (0x6D) ; 0x65 est Maj gauche.
 - `cible(texte) -> bytes(6)`, `cible_texte(bytes) -> str` : `f13`, `lctrl+c`, `media:playpause`, `mouse:left`, `none`, `default`, `raw:<12 hex>`.
 - `valeur_souris(texte) -> int`, `nom_valeur_souris(int) -> str` : `left right middle forward back disabled code:N`.
 
