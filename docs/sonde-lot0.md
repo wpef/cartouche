@@ -51,3 +51,17 @@ Les paliers correspondent exactement aux valeurs par défaut de `r8-rs`. La rép
 ## Ce qui ne répond pas
 - Toutes les lectures du clavier.
 - Batterie souris : réponse présente mais sans donnée.
+
+## Deuxième passe : clavier en câble USB, interrupteur sur OFF
+
+Le clavier se présente alors sous `2DC8:5200` (« 8BitDo Retro Keyboard »), interface de configuration en interface 2, page d'usage `0x8C`, même descripteur que le récepteur. Cette fois toutes les lectures répondent :
+
+| Envoi | Réponse | Lecture |
+|---|---|---|
+| `52 80` | `54 80 00 00 …` | aucun profil nommé dans le clavier |
+| `52 81 00` | `54 81 00 00 …` | aucune touche réaffectée |
+| `52 83 04 <hwkey>` (01, 02, 04, 0c) | `54 83 04 00 00 …` | touche à son affectation d'origine |
+
+Conclusion : la configuration du clavier passe par le câble, pas par le récepteur 2,4 G (`5201`), qui reste muet aux mêmes trames.
+
+Pendant cette passe la souris était en Bluetooth LE (`2DC8:5205`) : elle n'y expose que les collections standard (souris, clavier, contrôle système, consommateur), aucune interface fournisseur. Sa configuration demande donc l'adaptateur 2,4 G (`5206`) ; le câble reste à sonder.

@@ -65,7 +65,7 @@ for d in devs:
         log("descripteur : " + hx(h.get_report_descriptor()))
     except Exception as e:
         log(f"descripteur indisponible : {e}")
-    plan = KBD if d["product_id"] == 0x5201 and d["usage_page"] == 0x8C else \
+    plan = KBD if d["product_id"] in (0x5200, 0x5201) and d["usage_page"] == 0x8C else \
            MOUSE if d["product_id"] == 0x5206 and d["usage_page"] == 0xFF00 else []
     xfer = kbd_xfer if plan is KBD else mouse_xfer
     for name, body in plan:
