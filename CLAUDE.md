@@ -12,7 +12,11 @@ Si le vault n'est pas accessible dans cette session, dis-le en une ligne et dema
 
 ## Pile et commandes (Python)
 - Python 3.13 dans `.venv` ; seule dépendance : `hidapi`. Pas de Rust : Smart App Control est actif sur ce PC et bloque tout exécutable compilé ici (erreur 4551 sur le script de build de `quote`) ; on ne le désactive pas.
-- Installation : `.venv\Scripts\pip install -e .` (Windows) ; lancement : `.venv\Scripts\python -m cartouche list|dump|map|unmap|profile|macro|mouse|apply|restore` ; `--dry-run` n'envoie rien.
+- Installation : `.venv\Scripts\pip install -e .` (Windows). Application complète : `cartouche.cmd` ou `.venv\Scripts\python -m cartouche app [--demo] [--donnees <dossier>] [--duree <s>] [--sans-navigateur] [--sans-icone]` (interface + moteur + icône dans un seul processus : `cartouche/appli.py`, `cartouche/zone.py`). Outils en ligne de commande : `python -m cartouche list|dump|map|unmap|profile|macro|mouse|apply|restore` ; `--dry-run` n'envoie rien.
+- Fichier de l'utilisateur : `%APPDATA%\Cartouche\cartouche.json` (clavier, souris, logiciel ; `cartouche/donnees.py`). En essai, toujours `--donnees <dossier temporaire>`.
 - Tests : `.venv\Scripts\python -m unittest` (sans matériel, sur trames réelles).
 - Le transport refuse tout rapport `0xB2` (firmware). Sauvegarde automatique dans `captures/sauvegardes/` avant toute écriture, relecture de contrôle après.
-- API du cœur : `docs/api-coeur.md`. `cartouche/ui/` et `cartouche/moteur/` : réservés à d'autres chantiers.
+- API du cœur : `docs/api-coeur.md` ; interface : `docs/ui.md` ; moteur : `docs/moteur.md`.
+- Menu : le clavier n'a pas de touche Menu ; `menu`, `compose`, `app` sont des alias du bouton A (code matériel `0x6D`) d'après les deux sources de référence ; pas essayé sur le matériel.
+- Windows : `SO_REUSEADDR` laisse deux processus se lier au même port ; le serveur désactive `allow_reuse_address`.
+- `m.append(x)` écrit « null » si `x` est `null` : filtrer les enfants (`h()` le fait déjà).

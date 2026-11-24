@@ -17,7 +17,9 @@ AIDE = """python -m cartouche [--dry-run] [--dir <sauvegardes>] <commande>
   macro list|set <fichier.json>
   mouse show|button <n> <action>|dpi|rate|liftoff|wheel
   apply <fichier.json>          amener le matériel à l'état de la cartouche
-  restore <sauvegarde.json>     idem, depuis une sauvegarde"""
+  restore <sauvegarde.json>     idem, depuis une sauvegarde
+  app [--demo] [--donnees <dossier>] [--duree <s>] [--sans-navigateur] [--sans-icone]
+                                interface, moteur logiciel et icône de notification (voir `app --help`)"""
 
 
 def clavier(dry):
@@ -34,6 +36,9 @@ def sauvegarde(dossier, dry, k=None, m=None):
 
 
 def main(argv):
+    if argv[:1] == ["app"]:
+        from . import appli
+        return appli.main(argv[1:])
     dry = "--dry-run" in argv
     argv = [a for a in argv if a != "--dry-run"]
     dossier = None
@@ -111,7 +116,12 @@ def _present(pids, page):
     return any(d["pid"] in pids and d["page"] == page for d in transport.lister())
 
 
-try:
-    main(sys.argv[1:])
-except Erreur as e:
-    sys.exit(f"erreur : {e}")
+def cli():
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except Erreur as e:
+        sys.exit(f"erreur : {e}")
+
+
+if __name__ == "__main__":
+    cli()
